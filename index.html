@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>İskambil Falı Simülatörü</title>
+  <style>
+    :root {
+      --bg: #143522;
+      --card-bg: #ffffff;
+      --gold: #d4af37;
+    }
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at center, #1e4a30 0%, #0e2417 100%);
+      color: #fff;
+      min-height: 100vh;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 640px;
+      background: rgba(0, 0, 0, 0.45);
+      padding: 24px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    h1 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      text-align: center;
+      color: var(--gold);
+      font-size: 1.6rem;
+      letter-spacing: 1px;
+    }
+
+    /* Sekme Butonları */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 4px;
+      border-radius: 10px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      background: transparent;
+      border: none;
+      color: #aaa;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--gold);
+      color: #111;
+    }
+
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    label {
+      font-size: 0.85rem;
+      color: #ddd;
+    }
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px 16px;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background: #111;
+      color: #fff;
+      outline: none;
+    }
+    input:focus {
+      border-color: var(--gold);
+    }
+
+    .pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .pill-btn {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ddd;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .pill-btn:hover, .pill-btn.active {
+      background: var(--gold);
+      color: #111;
+      font-weight: 600;
+      border-color: var(--gold);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+    button.btn-main {
+      flex: 1;
+      padding: 12px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button.btn-main:hover { opacity: 0.9; }
+    .btn-gold {
+      background: var(--gold);
+      color: #111;
+    }
+    .btn-clear {
+      background: #333;
+      color: #ddd;
+    }
+
+    .results {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .match-card {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 14px;
+      border-left: 4px solid var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      animation: fadeIn 0.25s ease-out;
+    }
+    .cards-box {
+      display: flex;
+      gap: 8px;
+    }
+    .mini-card {
+      background: #fff;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-weight: bold;
+      min-width: 44px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      font-size: 1.1rem;
+    }
+    .red { color: #d63031; }
+    .black { color: #2d3436; }
+    .details {
+      flex: 1;
+    }
+    .details strong {
+      display: block;
+      color: var(--gold);
+      font-size: 1.1rem;
+      margin-bottom: 2px;
+    }
+    .details span {
+      font-size: 0.85rem;
+      color: #ccc;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 30px;
+      color: #aaa;
+      font-style: italic;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>İskambil Falı Simülatörü</h1>
+
+    <!-- Mod Seçim Sekmeleri -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('name')">👤 İsim İle Bak</button>
+      <button class="tab-btn" onclick="switchTab('count')">🔢 Sadece Harf Sayısıyla Bak (Gizli Mod)</button>
+    </div>
+
+    <!-- 1. MOD: İsim Girişi -->
+    <div id="tabName" class="tab-content active">
+      <div class="input-group">
+        <label>Aklınızdaki kişinin adı:</label>
+        <input type="text" id="targetName" placeholder="isim girin:">
+      </div>
+    </div>
+
+    <!-- 2. MOD: Harf Sayısı Girişi -->
+    <!-- 2. MOD: Harf Sayısı Girişi -->
+    <div id="tabCount" class="tab-content">
+      <div class="input-group">
+        <label>Aklınızdaki kişinin adındaki toplam harf sayısı (En fazla 15):</label>
+        <input type="number" id="letterCount" min="2" max="15" placeholder="Örn: 5" value="5">
+        <div class="pill-group">
+          <button class="pill-btn" onclick="selectCount(3)">3</button>
+          <button class="pill-btn" onclick="selectCount(4)">4</button>
+          <button class="pill-btn active" onclick="selectCount(5)">5</button>
+          <button class="pill-btn" onclick="selectCount(6)">6</button>
+          <button class="pill-btn" onclick="selectCount(7)">7</button>
+          <button class="pill-btn" onclick="selectCount(8)">8</button>
+          <button class="pill-btn" onclick="selectCount(9)">9</button>
+          <button class="pill-btn" onclick="selectCount(10)">10</button>
+          <button class="pill-btn" onclick="selectCount(11)">11</button>
+          <button class="pill-btn" onclick="selectCount(12)">12</button>
+          <button class="pill-btn" onclick="selectCount(13)">13</button>
+          <button class="pill-btn" onclick="selectCount(14)">14</button>
+          <button class="pill-btn" onclick="selectCount(15)">15</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ortak Aksiyon Butonları -->
+    <div class="actions">
+      <button class="btn-main btn-gold" onclick="runFortune()">⚡ Falı Aç</button>
+      <button class="btn-main btn-clear" onclick="clearResults()">Temizle</button>
+    </div>
+
+    <!-- Sonuç Alanı -->
+    <div class="results" id="resultsContainer">
+      <div class="empty-state">İsmi ya da harf sayısını belirleyip butona tıklayınca fal anında açılır.</div>
+    </div>
+  </div>
+
+  <script>
+    let currentMode = 'name'; // 'name' veya 'count'
+
+    const SUITS = [
+      { name: 'Kupa', symbol: '♥', color: 'red', classType: 'Asiller' },
+      { name: 'Karo', symbol: '♦', color: 'red', classType: 'Orta Sınıf' },
+      { name: 'Maça', symbol: '♠', color: 'black', classType: 'Askerler' },
+      { name: 'Sinek', symbol: '♣', color: 'black', classType: 'Köylüler' }
+    ];
+
+    const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+    const MEANINGS = {
+      'A': 'Sevgi',
+      '2': 'Kıskançlık',
+      '3': 'Cinsellik',
+      '4': 'Zaman',
+      '5': 'Kavga',
+      '6': 'Haber',
+      '7': 'Teklif',
+      '8': 'Özlem',
+      '9': 'Ayrılık',
+      '10': 'Sorun',
+      'J': 'Erkek',
+      'Q': 'Kız',
+      'K': 'Aşk'
+    };
+
+    function switchTab(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', (mode === 'name' && idx === 0) || (mode === 'count' && idx === 1));
+      });
+      document.getElementById('tabName').classList.toggle('active', mode === 'name');
+      document.getElementById('tabCount').classList.toggle('active', mode === 'count');
+      clearResults();
+    }
+
+    function selectCount(num) {
+      document.getElementById('letterCount').value = num;
+      document.querySelectorAll('.pill-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.innerText.startsWith(num));
+      });
+    }
+
+    function generateDeck() {
+      const deck = [];
+      let kupaAs = null;
+
+      for (const s of SUITS) {
+        for (const r of RANKS) {
+          const card = { rank: r, suit: s };
+          if (s.name === 'Kupa' && r === 'A') {
+            kupaAs = card;
+          } else {
+            deck.push(card);
+          }
+        }
+      }
+
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+
+      deck.push(kupaAs); // Kupa As en sonda
+      return deck;
+    }
+
+    function dealCards(deck, pileCount) {
+      if (pileCount < 2) return deck;
+
+      let piles = Array.from({ length: pileCount }, () => []);
+      let currentCards = [...deck];
+      let pIdx = 0;
+      let lastNonEmptyIdx = 0;
+      let maxSafety = 500;
+
+      while (currentCards.length > 0 && maxSafety-- > 0) {
+        while (currentCards.length > 0) {
+          const card = currentCards.shift();
+          piles[pIdx].push(card);
+          lastNonEmptyIdx = pIdx;
+          pIdx = (pIdx + 1) % pileCount;
+        }
+
+        const filledPiles = piles.filter(p => p.length > 0);
+        if (filledPiles.length <= 1) break;
+
+        currentCards = [...piles[lastNonEmptyIdx]];
+        piles[lastNonEmptyIdx] = [];
+        pIdx = (lastNonEmptyIdx + 1) % pileCount;
+      }
+
+      return piles.flat();
+    }
+
+    function drawAndMatch(gatheredDeck) {
+      const matches = [];
+      let currentDeck = [...gatheredDeck];
+
+      for (let round = 1; round <= 3; round++) {
+        const nextDeck = [];
+
+        while (currentDeck.length >= 2) {
+          const topCard = currentDeck.shift(); // üstten
+          const bottomCard = currentDeck.pop(); // alttan
+
+          if (topCard.rank === bottomCard.rank) {
+            matches.push({ round, card1: topCard, card2: bottomCard });
+          } else {
+            nextDeck.push(topCard);
+            nextDeck.push(bottomCard);
+          }
+        }
+
+        if (currentDeck.length === 1) {
+          nextDeck.push(currentDeck.pop());
+        }
+
+        currentDeck = nextDeck;
+        if (currentDeck.length < 2) break;
+      }
+
+      return matches;
+    }
+
+    function runFortune() {
+      const container = document.getElementById('resultsContainer');
+      let pileCount = 0;
+
+      if (currentMode === 'name') {
+        const nameInput = document.getElementById('targetName').value.trim();
+        if (!nameInput) {
+          container.innerHTML = '<div class="empty-state" style="color: #ff7675;">Lütfen önce aklınızdaki kişinin adını girin.</div>';
+          return;
+        }
+        const cleanName = nameInput.replace(/[\s\d\W_]/g, '');
+        pileCount = cleanName.length;
+        if (pileCount < 2) {
+          container.innerHTML = '<div class="empty-state" style="color: #ff7675;">Lütfen en az 2 harfli bir isim girin.</div>';
+          return;
+        }
+      } else {
+        pileCount = parseInt(document.getElementById('letterCount').value, 10);
+        if (isNaN(pileCount) || pileCount < 2) {
+          container.innerHTML = '<div class="empty-state" style="color: #ff7675;">Lütfen en az 2 olacak bir harf sayısı seçin.</div>';
+          return;
+        }
+      }
+
+      container.innerHTML = '';
+
+      const deck = generateDeck();
+      const gathered = dealCards(deck, pileCount);
+      const matches = drawAndMatch(gathered);
+
+      if (matches.length === 0) {
+        container.innerHTML = '<div class="empty-state">Kartlar eşleşmedi; bu açılımda çift gelmedi. Şansını tekrar dene!</div>';
+        return;
+      }
+
+      matches.forEach(m => {
+        const c1 = m.card1;
+        const c2 = m.card2;
+        const meaning = MEANINGS[c1.rank];
+
+        const el = document.createElement('div');
+        el.className = 'match-card';
+        el.innerHTML = `
+          <div class="cards-box">
+            <div class="mini-card ${c1.suit.color}">${c1.suit.symbol} ${c1.rank}</div>
+            <div class="mini-card ${c2.suit.color}">${c2.suit.symbol} ${c2.rank}</div>
+          </div>
+          <div class="details">
+            <strong>${meaning} (${c1.rank} Çifti)</strong>
+            <span>${m.round}. Tur eşleşmesi — ${c1.suit.name} (${c1.suit.classType}) & ${c2.suit.name} (${c2.suit.classType})</span>
+          </div>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    function clearResults() {
+      document.getElementById('targetName').value = '';
+      document.getElementById('resultsContainer').innerHTML = '<div class="empty-state">İsmi ya da harf sayısını belirleyip butona tıklayınca fal anında açılır.</div>';
+    }
+  </script>
+</body>
+</html>
